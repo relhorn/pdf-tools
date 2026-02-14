@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF PRO MAX - המערכת המלאה</title>
+    <title>PDF MASTER - המערכת המלאה</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -18,11 +18,13 @@
 
     <style>
         :root {
-            --primary: #4338ca;
-            --bg: #f3f4f6;
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --bg: #f8fafc;
             --card: #ffffff;
-            --text: #111827;
-            --border: #e5e7eb;
+            --text: #0f172a;
+            --border: #e2e8f0;
+            --delete: #ef4444;
         }
 
         body {
@@ -34,228 +36,301 @@
             direction: rtl;
         }
 
-        .container { max-width: 1100px; margin: 0 auto; }
-        h1 { text-align: center; color: var(--primary); margin-bottom: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* תפריט */
+        /* תפריט ראשי */
         .nav-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .nav-btn {
             background: white;
-            border: 1px solid #ddd;
-            padding: 15px;
+            border: 1px solid var(--border);
+            padding: 12px;
             text-align: center;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 5px;
-            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
 
-        .nav-btn:hover { background: #e0e7ff; border-color: var(--primary); }
-        .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .nav-btn span { font-size: 1.5em; }
+        .nav-btn span { font-size: 1.4em; }
+        .nav-btn:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
 
         /* ניהול קבצים */
         .file-manager {
             background: white;
             border: 2px dashed #94a3b8;
             border-radius: 12px;
-            padding: 15px;
+            padding: 20px;
             margin-bottom: 20px;
         }
 
         .file-list {
             list-style: none;
             padding: 0;
+            margin: 15px 0 0 0;
             max-height: 200px;
             overflow-y: auto;
         }
 
         .file-item {
             background: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            margin: 5px 0;
-            padding: 8px 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: move;
-            font-size: 0.9em;
         }
 
         .btn-add {
-            background: #059669;
+            background: #10b981;
             color: white;
-            padding: 8px 15px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            display: inline-block;
             font-weight: bold;
+            display: inline-block;
+        }
+
+        /* עורך ויזואלי */
+        .visual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            min-height: 200px;
+        }
+
+        .page-thumb {
+            background: white;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .page-thumb canvas { width: 100%; display: block; }
+        
+        .page-thumb.selected {
+            border-color: var(--delete);
+            opacity: 0.7;
+            transform: scale(0.95);
+        }
+        .page-thumb.selected::after {
+            content: '🗑️';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 5px; right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
         }
 
         /* אזורי עבודה */
-        .workspace { display: none; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .workspace { display: none; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .workspace.active { display: block; }
 
-        .file-info-bar {
+        .info-bar {
             background: #eff6ff;
-            border: 1px solid #bfdbfe;
             color: #1e40af;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             font-size: 0.9em;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            border: 1px solid #bfdbfe;
         }
 
         /* פקדים */
-        .control-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .control-item { display: flex; flex-direction: column; gap: 5px; }
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
         
-        label { font-weight: bold; font-size: 0.9em; }
-        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+        label { font-weight: 600; font-size: 0.9em; color: #475569; }
+        input, select { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1em; }
 
         .btn-action {
-            background: var(--primary);
-            color: white;
             width: 100%;
             padding: 15px;
+            background: var(--primary);
+            color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.2s;
             margin-top: 10px;
         }
-        .btn-action:hover { opacity: 0.9; }
+        .btn-action:hover { background: #1d4ed8; }
+        .btn-danger { background: var(--delete); }
+        .btn-danger:hover { background: #dc2626; }
 
-        .status-box { margin-top: 15px; padding: 15px; border-radius: 8px; text-align: center; display: none; font-weight: bold; }
-        .status-box.loading { background: #fff7ed; color: #9a3412; }
-        .status-box.success { background: #f0fdf4; color: #166534; }
-        .status-box.error { background: #fef2f2; color: #991b1b; }
-
+        /* סטטוס ופונטים */
         .font-alert {
             background: #fffbeb;
             border: 1px solid #fcd34d;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.9em;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
         }
+
+        .status-msg {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        .status-msg.loading { background: #e0f2fe; color: #0369a1; }
+        .status-msg.success { background: #dcfce7; color: #166534; }
+        .status-msg.error { background: #fee2e2; color: #991b1b; }
+
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>PDF PRO MAX 🛠️</h1>
+    <h1>PDF PRO MAX 🚀</h1>
 
     <div class="nav-grid">
-        <div class="nav-btn active" onclick="showTab('merge')"><span>🔗</span>איחוד</div>
-        <div class="nav-btn" onclick="showTab('split')"><span>✂️</span>פיצול</div>
-        <div class="nav-btn" onclick="showTab('text')"><span>✏️</span>טקסט</div>
-        <div class="nav-btn" onclick="showTab('watermark')"><span>💧</span>חותמת</div>
-        <div class="nav-btn" onclick="showTab('pagenum')"><span>🔢</span>מספור</div>
-        <div class="nav-btn" onclick="showTab('convert')"><span>🖼️</span>המרה ל-IMG</div>
-        <div class="nav-btn" onclick="showTab('img-pdf')"><span>📷</span>תמונה ל-PDF</div>
-        <div class="nav-btn" onclick="showTab('protect')"><span>🔒</span>הצפנה</div>
-        <div class="nav-btn" onclick="showTab('bw')"><span>⚫</span>שחור לבן</div>
+        <div class="nav-btn active" onclick="switchTab('visual')"><span>👁️</span>עריכה ויזואלית</div>
+        <div class="nav-btn" onclick="switchTab('merge')"><span>🔗</span>איחוד</div>
+        <div class="nav-btn" onclick="switchTab('split')"><span>✂️</span>פיצול (ZIP)</div>
+        <div class="nav-btn" onclick="switchTab('text')"><span>✏️</span>טקסט</div>
+        <div class="nav-btn" onclick="switchTab('watermark')"><span>💧</span>חותמת</div>
+        <div class="nav-btn" onclick="switchTab('pagenum')"><span>🔢</span>מספור</div>
+        <div class="nav-btn" onclick="switchTab('convert')"><span>🖼️</span>ל-תמונות</div>
+        <div class="nav-btn" onclick="switchTab('img2pdf')"><span>📷</span>תמונה ל-PDF</div>
+        <div class="nav-btn" onclick="switchTab('protect')"><span>🔒</span>הצפנה</div>
+        <div class="nav-btn" onclick="switchTab('bw')"><span>⚫</span>שחור לבן</div>
     </div>
 
     <div class="file-manager">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>📂 הקבצים שלך (גרור לשינוי סדר)</h3>
+            <div>
+                <h3>📂 רשימת קבצים</h3>
+                <small style="color:#64748b">גרור לשינוי סדר | ניתן להוסיף עוד קבצים בכל רגע</small>
+            </div>
             <label class="btn-add">
                 + הוסף קבצים
                 <input type="file" multiple accept=".pdf,.jpg,.png,.jpeg" style="display:none" onchange="addFiles(this)">
             </label>
         </div>
         <ul id="file-list" class="file-list">
-            <li style="text-align:center; color:#999; padding:20px;">הרשימה ריקה... הוסף קבצים כדי להתחיל</li>
+            <li style="text-align:center; color:#94a3b8; padding:20px;">הרשימה ריקה... הוסף קבצים כדי להתחיל</li>
         </ul>
-        <div style="text-align: left; margin-top: 10px;">
-            <button onclick="clearFiles()" style="color:red; background:none; border:none; cursor:pointer;">נקה הכל</button>
-        </div>
+        <button onclick="clearFiles()" style="color:#ef4444; background:none; border:none; cursor:pointer; margin-top:10px; font-weight:bold;">🗑️ נקה הכל</button>
     </div>
 
     <div class="font-alert">
         <div>
-            <b>חובה לעברית!</b> למניעת ג'יבריש (WinAnsi), טען קובץ פונט (ttf) מהמחשב.
+            <b>⚠️ חובה לעברית!</b> למניעת ג'יבריש, טען קובץ פונט (כמו Arial.ttf) מהמחשב.
         </div>
         <div>
             <input type="file" accept=".ttf,.otf" onchange="loadFont(this)">
-            <span id="font-status" style="margin-right:5px; font-weight:bold; color:red;">לא נטען</span>
+            <span id="font-status" style="margin-right:8px; font-weight:bold; color:#ef4444;">לא נטען</span>
         </div>
     </div>
 
-    <div id="tab-merge" class="workspace active">
-        <div class="file-info-bar">ממתין לפעולה על כל הקבצים ברשימה</div>
+    <div id="tab-visual" class="workspace active">
+        <div class="info-bar" id="info-visual">טען קובץ PDF כדי לראות את העמודים</div>
+        <h2>עריכה ויזואלית: מחיקה וסידור מחדש</h2>
+        <p>לחץ על עמוד כדי לסמן אותו למחיקה (אדום), או גרור כדי לשנות סדר.</p>
+        
+        <div class="controls">
+            <button class="btn-action" onclick="loadVisualEditor()">🔄 טען תצוגה מקדימה</button>
+            <button class="btn-action btn-danger" onclick="deleteSelectedPages()">🗑️ מחק עמודים מסומנים</button>
+            <button class="btn-action" onclick="saveVisualChanges()" style="background:#059669;">💾 שמור קובץ חדש</button>
+        </div>
+        
+        <div id="visual-grid" class="visual-grid"></div>
+    </div>
+
+    <div id="tab-merge" class="workspace">
+        <div class="info-bar">ממתין לאיחוד כל הקבצים ברשימה</div>
         <h2>איחוד קבצים (PDF + תמונות)</h2>
-        <p>המערכת תחבר את כל הקבצים ברשימה לקובץ PDF אחד ארוך.</p>
+        <p>הקבצים יחוברו לפי הסדר שקבעת ברשימה למעלה.</p>
         <button class="btn-action" onclick="runMerge()">בצע איחוד והורד</button>
     </div>
 
     <div id="tab-split" class="workspace">
-        <div class="file-info-bar" id="info-split">בחר קובץ...</div>
+        <div class="info-bar" id="info-split">בחר קובץ...</div>
         <h2>פיצול PDF</h2>
-        <div class="control-grid">
-            <div class="control-item">
-                <label>סוג פיצול:</label>
-                <select id="split-mode" onchange="toggleSplitInputs()">
-                    <option value="zip">כל העמודים לקבצים נפרדים (ZIP)</option>
-                    <option value="range">טווח עמודים (למשל 1-5)</option>
+        <div class="controls">
+            <div class="control-group">
+                <label>מצב:</label>
+                <select id="split-mode" onchange="document.getElementById('range-box').style.display = this.value==='range'?'block':'none'">
+                    <option value="zip">פצל הכל ל-ZIP (כל עמוד בנפרד)</option>
+                    <option value="range">שמור טווח עמודים (חילוץ)</option>
                 </select>
             </div>
-            <div class="control-item" id="split-range-box" style="display:none;">
-                <label>טווח (למשל 1-5, או 1,3,5):</label>
+            <div class="control-group" id="range-box" style="display:none;">
+                <label>טווח (למשל 1-5):</label>
                 <input type="text" id="split-range" placeholder="1-5">
             </div>
         </div>
-        <button class="btn-action" onclick="runSplit()">בצע פיצול</button>
+        <button class="btn-action" onclick="runSplit()">בצע</button>
     </div>
 
     <div id="tab-text" class="workspace">
-        <div class="file-info-bar" id="info-text">בחר קובץ...</div>
+        <div class="info-bar" id="info-text">בחר קובץ...</div>
         <h2>הוספת טקסט</h2>
-        <div class="control-grid">
-            <div class="control-item">
+        <div class="controls">
+            <div class="control-group">
                 <label>טקסט:</label>
-                <input type="text" id="txt-val" placeholder="הטקסט שלך">
+                <input type="text" id="txt-val" placeholder="הכנס טקסט">
             </div>
-            <div class="control-item">
+            <div class="control-group">
                 <label>גודל:</label>
                 <input type="number" id="txt-size" value="24">
             </div>
-            <div class="control-item">
+            <div class="control-group">
                 <label>צבע:</label>
-                <input type="color" id="txt-color" value="#000000" style="height:42px;">
+                <input type="color" id="txt-color" value="#000000" style="height:45px;">
             </div>
-            <div class="control-item">
+            <div class="control-group">
                 <label>מיקום:</label>
                 <select id="txt-pos">
                     <option value="top-right">למעלה מימין</option>
                     <option value="top-left">למעלה משמאל</option>
                     <option value="center">מרכז</option>
-                    <option value="bottom-center">למטה באמצע</option>
+                    <option value="bottom">למטה</option>
                 </select>
             </div>
         </div>
@@ -263,46 +338,46 @@
     </div>
 
     <div id="tab-watermark" class="workspace">
-        <div class="file-info-bar" id="info-watermark">בחר קובץ...</div>
-        <h2>חותמת מים (החזרתי את כל האופציות!)</h2>
-        <div class="control-grid">
-            <div class="control-item">
-                <label>טקסט החותמת:</label>
-                <input type="text" id="wm-val" placeholder="טיוטה / סודי">
+        <div class="info-bar" id="info-watermark">בחר קובץ...</div>
+        <h2>חותמת מים מתקדמת</h2>
+        <div class="controls">
+            <div class="control-group">
+                <label>טקסט:</label>
+                <input type="text" id="wm-text" placeholder="טיוטה">
             </div>
-            <div class="control-item">
-                <label>זווית (מעלות):</label>
-                <input type="number" id="wm-angle" value="45" placeholder="45 לאלכסון">
+            <div class="control-group">
+                <label>זווית (45 לאלכסון):</label>
+                <input type="number" id="wm-angle" value="45">
             </div>
-            <div class="control-item">
-                <label>גודל גופן:</label>
+            <div class="control-group">
+                <label>שקיפות (0-1):</label>
+                <input type="number" id="wm-op" value="0.3" step="0.1" max="1">
+            </div>
+            <div class="control-group">
+                <label>גודל:</label>
                 <input type="number" id="wm-size" value="60">
             </div>
-            <div class="control-item">
-                <label>שקיפות (0.1 עד 1):</label>
-                <input type="number" id="wm-op" value="0.3" step="0.1" max="1" min="0.1">
-            </div>
-            <div class="control-item">
+            <div class="control-group">
                 <label>צבע:</label>
-                <input type="color" id="wm-color" value="#888888" style="height:42px;">
+                <input type="color" id="wm-color" value="#999999" style="height:45px;">
             </div>
         </div>
         <button class="btn-action" onclick="runWatermark()">הוסף חותמת</button>
     </div>
 
     <div id="tab-pagenum" class="workspace">
-        <div class="file-info-bar" id="info-pagenum">בחר קובץ...</div>
+        <div class="info-bar" id="info-pagenum">בחר קובץ...</div>
         <h2>מספור עמודים</h2>
-        <div class="control-grid">
-            <div class="control-item">
+        <div class="controls">
+            <div class="control-group">
                 <label>פורמט:</label>
                 <select id="pg-fmt">
                     <option value="num">1, 2, 3</option>
-                    <option value="eng">Page 1 of 10</option>
                     <option value="heb">עמוד 1 מתוך 10</option>
+                    <option value="eng">Page 1 of 10</option>
                 </select>
             </div>
-            <div class="control-item">
+            <div class="control-group">
                 <label>מיקום:</label>
                 <select id="pg-pos">
                     <option value="bottom">למטה באמצע</option>
@@ -310,82 +385,87 @@
                     <option value="bottom-side">למטה בצד</option>
                 </select>
             </div>
-            <div class="control-item">
-                <label>גודל:</label>
-                <input type="number" id="pg-size" value="12">
-            </div>
-            <div class="control-item">
+            <div class="control-group">
                 <label>צבע:</label>
-                <input type="color" id="pg-color" value="#000000" style="height:42px;">
+                <input type="color" id="pg-color" value="#000000" style="height:45px;">
             </div>
         </div>
         <button class="btn-action" onclick="runPageNum()">הוסף מספור</button>
     </div>
 
     <div id="tab-convert" class="workspace">
-        <div class="file-info-bar" id="info-convert">בחר קובץ...</div>
-        <h2>המרת PDF לתמונות (ZIP)</h2>
-        <div class="control-grid">
-            <div class="control-item">
+        <div class="info-bar" id="info-convert">בחר קובץ...</div>
+        <h2>המרה לתמונות (ZIP)</h2>
+        <p>הופך כל דף לתמונה ושומר בתיקייה מכווצת.</p>
+        <div class="controls">
+            <div class="control-group">
                 <label>פורמט:</label>
                 <select id="conv-fmt">
-                    <option value="jpeg">JPEG (קל משקל)</option>
+                    <option value="jpeg">JPEG (קבצים קטנים)</option>
                     <option value="png">PNG (איכות גבוהה)</option>
                 </select>
             </div>
         </div>
-        <button class="btn-action" onclick="runConvertToImages()">המר והורד ZIP</button>
+        <button class="btn-action" onclick="runConvertToImages()">המר והורד</button>
     </div>
 
-    <div id="tab-img-pdf" class="workspace">
-        <div class="file-info-bar">הקובץ ה-1: PDF, הקובץ ה-2: תמונה</div>
+    <div id="tab-img2pdf" class="workspace">
+        <div class="info-bar">קובץ 1: PDF, קובץ 2: תמונה</div>
         <h2>הדבקת תמונה על PDF</h2>
-        <div class="control-grid">
-            <div class="control-item">
-                <label>גודל (Scale):</label>
-                <input type="number" id="img-scale" value="0.5" step="0.1" placeholder="0.5 = חצי גודל">
-            </div>
-            <div class="control-item">
+        <div class="controls">
+            <div class="control-group">
                 <label>שקיפות:</label>
-                <input type="number" id="img-op" value="1" step="0.1" max="1">
+                <input type="number" id="img-op" value="1" max="1" step="0.1">
             </div>
-            <div class="control-item">
+            <div class="control-group">
+                <label>גודל (Scale):</label>
+                <input type="number" id="img-scale" value="0.5" step="0.1">
+            </div>
+            <div class="control-group">
                 <label>מיקום X:</label>
                 <input type="number" id="img-x" value="50">
             </div>
-            <div class="control-item">
+            <div class="control-group">
                 <label>מיקום Y:</label>
                 <input type="number" id="img-y" value="50">
             </div>
         </div>
-        <button class="btn-action" onclick="runImgOverlay()">הדבק תמונה</button>
+        <button class="btn-action" onclick="runImgOverlay()">הדבק</button>
     </div>
 
     <div id="tab-protect" class="workspace">
-        <div class="file-info-bar" id="info-protect">בחר קובץ...</div>
-        <h2>הגנה בסיסמה</h2>
-        <input type="password" id="pass-val" placeholder="הזן סיסמה חזקה">
+        <div class="info-bar" id="info-protect">בחר קובץ...</div>
+        <h2>הגנה בסיסמה (Fixed)</h2>
+        <div class="controls">
+            <div class="control-group">
+                <label>סיסמה:</label>
+                <input type="password" id="pass-val" placeholder="הזן סיסמה באנגלית">
+            </div>
+        </div>
         <button class="btn-action" onclick="runProtect()">הצפן קובץ</button>
     </div>
 
     <div id="tab-bw" class="workspace">
-        <div class="file-info-bar" id="info-bw">בחר קובץ...</div>
+        <div class="info-bar" id="info-bw">בחר קובץ...</div>
         <h2>המרה לשחור לבן</h2>
-        <p>ממיר את כל עמודי ה-PDF לגווני אפור.</p>
-        <button class="btn-action" onclick="runGrayscale()">בצע המרה</button>
+        <p>תהליך זה ממיר את עמודי ה-PDF לגווני אפור.</p>
+        <button class="btn-action" onclick="runGrayscale()">המר</button>
     </div>
 
-    <div id="status" class="status-box"></div>
+    <div id="status" class="status-msg"></div>
+
 </div>
 
 <script>
-    // === משתנים גלובליים ===
+    // === משתנים ===
     let fileQueue = [];
     let customFont = null;
+    let visualPdfDoc = null; // למניפולציה ויזואלית
+    let visualPageOrder = []; // מעקב אחרי הסדר הויזואלי
     const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
 
-    // === ניהול ממשק ===
-    function showTab(id) {
+    // === ניהול UI ===
+    function switchTab(id) {
         document.querySelectorAll('.workspace').forEach(e => e.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
         document.getElementById('tab-' + id).classList.add('active');
@@ -397,28 +477,33 @@
     function setStatus(msg, type = 'loading') {
         const el = document.getElementById('status');
         if (!msg) { el.style.display = 'none'; return; }
-        el.innerHTML = msg;
-        el.className = 'status-box ' + type;
+        el.innerText = msg;
+        el.className = 'status-msg ' + type;
         el.style.display = 'block';
     }
 
-    function toggleSplitInputs() {
-        const val = document.getElementById('split-mode').value;
-        document.getElementById('split-range-box').style.display = (val === 'range') ? 'block' : 'none';
-    }
-
-    // === עדכון מידע על הקובץ הנוכחי ===
-    function updateFileInfo(tabId) {
+    // === עדכון מידע ===
+    async function updateFileInfo(tabId) {
         const infoId = 'info-' + tabId;
         const el = document.getElementById(infoId);
         if (!el) return;
 
         if (fileQueue.length === 0) {
             el.innerText = 'לא נבחרו קבצים (הוסף למעלה)';
-            el.style.color = 'red';
+            el.style.color = '#ef4444';
         } else {
             const f = fileQueue[0];
-            el.innerText = `עובד על: ${f.name} (${f.size}) - ${f.type}`;
+            // ניסיון לקרוא מספר עמודים אם זה PDF
+            let pageCount = '?';
+            if (f.type === 'application/pdf') {
+                try {
+                    const arrayBuffer = await f.file.arrayBuffer(); // קריאה מהירה רק למידע
+                    const pdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                    pageCount = pdf.getPageCount();
+                } catch(e) { /* התעלם משגיאות הצפנה בשלב התצוגה */ }
+            }
+            
+            el.innerText = `קובץ: ${f.name} | גודל: ${f.size} | עמודים: ${pageCount}`;
             el.style.color = '#1e40af';
         }
     }
@@ -431,14 +516,14 @@
                 file: f,
                 name: f.name,
                 type: f.type,
-                size: (f.size / 1024 / 1024).toFixed(2) + ' MB'
+                size: (f.size / 1024 / 1024).toFixed(2) + 'MB'
             });
         });
         renderFiles();
         input.value = '';
-        // רענון המידע בטאב הפעיל
+        // עדכון המידע בטאב הפעיל
         const activeTab = document.querySelector('.workspace.active');
-        if (activeTab) updateFileInfo(activeTab.id.replace('tab-', ''));
+        if(activeTab) updateFileInfo(activeTab.id.replace('tab-', ''));
     }
 
     function removeFile(id) {
@@ -449,6 +534,7 @@
     function clearFiles() {
         fileQueue = [];
         renderFiles();
+        document.getElementById('visual-grid').innerHTML = ''; // ניקוי ויזואלי
     }
 
     function renderFiles() {
@@ -463,24 +549,20 @@
             li.className = 'file-item';
             li.setAttribute('data-id', f.id);
             li.innerHTML = `
-                <div>
-                    <strong>${i + 1}. ${f.name}</strong>
-                    <span style="font-size:0.8em; color:#666;">(${f.size})</span>
-                </div>
-                <button onclick="removeFile('${f.id}')" style="color:red; background:none; border:none; cursor:pointer;">X</button>
+                <div><strong>${i + 1}. ${f.name}</strong> <span style="font-size:0.8em; color:#64748b">(${f.size})</span></div>
+                <button onclick="removeFile('${f.id}')" style="background:none; border:none; cursor:pointer;">❌</button>
             `;
             list.appendChild(li);
         });
     }
 
-    // גרירה
+    // גרירה ברשימת הקבצים
     new Sortable(document.getElementById('file-list'), {
         animation: 150,
         onEnd: () => {
             const newOrder = [];
             document.querySelectorAll('.file-item').forEach(el => {
-                const id = el.getAttribute('data-id');
-                newOrder.push(fileQueue.find(f => f.id === id));
+                newOrder.push(fileQueue.find(f => f.id === el.getAttribute('data-id')));
             });
             fileQueue = newOrder;
             renderFiles();
@@ -494,8 +576,8 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             customFont = e.target.result;
-            document.getElementById('font-status').innerText = '✅ ' + file.name;
-            document.getElementById('font-status').style.color = 'green';
+            document.getElementById('font-status').innerText = '✅ נטען: ' + file.name;
+            document.getElementById('font-status').style.color = '#16a34a';
         };
         reader.readAsArrayBuffer(file);
     }
@@ -510,7 +592,80 @@
     }
 
     // ============================================
-    //              לוגיקה (Functions)
+    //              עורך ויזואלי (חדש!)
+    // ============================================
+    
+    async function loadVisualEditor() {
+        if (!fileQueue.length || fileQueue[0].type !== 'application/pdf') return alert('בחר קובץ PDF ראשון ברשימה');
+        
+        setStatus('טוען תצוגה מקדימה...');
+        const grid = document.getElementById('visual-grid');
+        grid.innerHTML = '';
+        visualPageOrder = [];
+
+        try {
+            const bytes = await fileQueue[0].file.arrayBuffer();
+            visualPdfDoc = await PDFDocument.load(bytes); // לשימוש בשינויים
+            
+            // שימוש ב-PDF.js לרינדור תמונות
+            const loadingTask = pdfjsLib.getDocument(bytes);
+            const pdf = await loadingTask.promise;
+            
+            for(let i=1; i<=pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 0.3 }); // תמונה קטנה
+                
+                const div = document.createElement('div');
+                div.className = 'page-thumb';
+                div.setAttribute('data-original-index', i - 1); // אינדקס 0-based
+                div.onclick = () => div.classList.toggle('selected');
+                
+                const canvas = document.createElement('canvas');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                
+                div.appendChild(canvas);
+                div.innerHTML += `<div class="page-number">${i}</div>`;
+                grid.appendChild(div);
+                visualPageOrder.push(i-1);
+            }
+            
+            // אפשור גרירה בעורך הויזואלי
+            new Sortable(grid, { animation: 150 });
+            setStatus('✅ התצוגה נטענה. ניתן לגרור ולסמן.', 'success');
+
+        } catch(e) { setStatus('שגיאה בטעינה: ' + e.message, 'error'); }
+    }
+
+    function deleteSelectedPages() {
+        const selected = document.querySelectorAll('.page-thumb.selected');
+        if(selected.length === 0) return alert('לא נבחרו עמודים');
+        selected.forEach(el => el.remove()); // הסרה מהתצוגה (השמירה תתבצע לפי ה-DOM)
+    }
+
+    async function saveVisualChanges() {
+        if(!visualPdfDoc) return alert('קודם טען תצוגה');
+        setStatus('שומר שינויים...');
+        
+        try {
+            const newPdf = await PDFDocument.create();
+            // קריאת הסדר החדש מה-DOM
+            const thumbs = document.querySelectorAll('.page-thumb');
+            const indices = Array.from(thumbs).map(el => parseInt(el.getAttribute('data-original-index')));
+            
+            const copiedPages = await newPdf.copyPages(visualPdfDoc, indices);
+            copiedPages.forEach(p => newPdf.addPage(p));
+            
+            downloadBlob(new Blob([await newPdf.save()], {type:'application/pdf'}), 'edited_visual.pdf');
+            setStatus('✅ נשמר בהצלחה!', 'success');
+        } catch(e) { setStatus('שגיאה בשמירה: ' + e.message, 'error'); }
+    }
+
+
+    // ============================================
+    //              שאר הפונקציות
     // ============================================
 
     // 1. איחוד
@@ -534,7 +689,7 @@
                 }
             }
             downloadBlob(new Blob([await doc.save()], { type: 'application/pdf' }), 'merged.pdf');
-            setStatus('✅ איחוד הצליח!', 'success');
+            setStatus('✅ בוצע!', 'success');
         } catch (e) { setStatus('שגיאה: ' + e.message, 'error'); }
     }
 
@@ -542,8 +697,7 @@
     async function runSplit() {
         if (!fileQueue.length) return alert('בחר קובץ');
         const mode = document.getElementById('split-mode').value;
-        setStatus('מבצע פיצול...');
-        
+        setStatus('מפצל...');
         try {
             const bytes = await fileQueue[0].file.arrayBuffer();
             const src = await PDFDocument.load(bytes);
@@ -559,22 +713,19 @@
                 const content = await zip.generateAsync({ type: "blob" });
                 downloadBlob(content, "split_files.zip");
             } else {
-                // טווח
-                const rangeStr = document.getElementById('split-range').value; // "1-3"
-                // פיענוח טווח פשוט (1-3)
+                const rangeStr = document.getElementById('split-range').value;
                 const parts = rangeStr.split('-');
                 let start = parseInt(parts[0]) - 1;
                 let end = parseInt(parts[1]) - 1;
-                
-                if (isNaN(start) || isNaN(end)) throw new Error('טווח לא תקין');
+                if (isNaN(start)) throw new Error('טווח לא תקין');
                 
                 const newDoc = await PDFDocument.create();
                 const indices = [];
-                for (let i = start; i <= end; i++) indices.push(i);
+                for(let i=start; i<=end; i++) indices.push(i);
                 
                 const pages = await newDoc.copyPages(src, indices);
                 pages.forEach(p => newDoc.addPage(p));
-                downloadBlob(new Blob([await newDoc.save()], {type:'application/pdf'}), 'split_range.pdf');
+                downloadBlob(new Blob([await newDoc.save()], {type:'application/pdf'}), 'split.pdf');
             }
             setStatus('✅ בוצע!', 'success');
         } catch (e) { setStatus('שגיאה: ' + e.message, 'error'); }
@@ -585,7 +736,6 @@
         if (!fileQueue.length) return alert('בחר קובץ');
         if (!customFont) return alert('חובה לטעון פונט!');
         setStatus('מוסיף טקסט...');
-        
         try {
             const doc = await PDFDocument.load(await fileQueue[0].file.arrayBuffer());
             doc.registerFontkit(fontkit);
@@ -594,57 +744,46 @@
             const text = document.getElementById('txt-val').value.split('').reverse().join('');
             const size = parseInt(document.getElementById('txt-size').value);
             const colorHex = document.getElementById('txt-color').value;
-            const r = parseInt(colorHex.slice(1, 3), 16) / 255;
-            const g = parseInt(colorHex.slice(3, 5), 16) / 255;
-            const b = parseInt(colorHex.slice(5, 7), 16) / 255;
             const pos = document.getElementById('txt-pos').value;
+            const rgbColor = hexToRgb(colorHex);
 
             doc.getPages().forEach(p => {
-                const { width, height } = p.getSize();
-                let x = 50, y = 50;
-                if (pos === 'top-right') { x = width - 200; y = height - 50; }
-                if (pos === 'top-left') { x = 50; y = height - 50; }
-                if (pos === 'center') { x = width / 2 - 50; y = height / 2; }
-                if (pos === 'bottom-center') { x = width / 2 - 50; y = 50; }
+                const {width, height} = p.getSize();
+                let x=50, y=50;
+                if(pos.includes('top')) y = height - 50;
+                if(pos.includes('center')) { x = width/2; y = height/2; }
+                if(pos.includes('right')) x = width - 200;
                 
-                p.drawText(text, { x, y, size, font, color: rgb(r, g, b) });
+                p.drawText(text, { x, y, size, font, color: rgbColor });
             });
             downloadBlob(new Blob([await doc.save()], { type: 'application/pdf' }), 'text.pdf');
             setStatus('✅ בוצע!', 'success');
         } catch (e) { setStatus('שגיאה: ' + e.message, 'error'); }
     }
 
-    // 4. חותמת מים (עם כל האופציות)
+    // 4. חותמת מים
     async function runWatermark() {
         if (!fileQueue.length) return alert('בחר קובץ');
         setStatus('מוסיף חותמת...');
         try {
             const doc = await PDFDocument.load(await fileQueue[0].file.arrayBuffer());
-            let font;
-            if (customFont) {
-                doc.registerFontkit(fontkit);
-                font = await doc.embedFont(customFont);
-            } else {
-                font = await doc.embedFont(StandardFonts.Helvetica);
-            }
-
-            const text = document.getElementById('wm-val').value.split('').reverse().join('');
+            doc.registerFontkit(fontkit);
+            let font = customFont ? await doc.embedFont(customFont) : await doc.embedFont(StandardFonts.Helvetica);
+            
+            const text = document.getElementById('wm-text').value.split('').reverse().join('');
             const angle = parseInt(document.getElementById('wm-angle').value);
             const size = parseInt(document.getElementById('wm-size').value);
             const op = parseFloat(document.getElementById('wm-op').value);
-            const colorHex = document.getElementById('wm-color').value;
-            const r = parseInt(colorHex.slice(1, 3), 16) / 255;
-            const g = parseInt(colorHex.slice(3, 5), 16) / 255;
-            const b = parseInt(colorHex.slice(5, 7), 16) / 255;
+            const rgbColor = hexToRgb(document.getElementById('wm-color').value);
 
             doc.getPages().forEach(p => {
                 const { width, height } = p.getSize();
                 p.drawText(text, {
-                    x: width / 2 - 50,
+                    x: width / 2 - (size*2),
                     y: height / 2,
                     size: size,
                     font: font,
-                    color: rgb(r, g, b),
+                    color: rgbColor,
                     opacity: op,
                     rotate: degrees(angle)
                 });
@@ -660,21 +799,12 @@
         setStatus('ממספר...');
         try {
             const doc = await PDFDocument.load(await fileQueue[0].file.arrayBuffer());
-            let font;
-            if (customFont) {
-                doc.registerFontkit(fontkit);
-                font = await doc.embedFont(customFont);
-            } else {
-                font = await doc.embedFont(StandardFonts.Helvetica);
-            }
-
+            doc.registerFontkit(fontkit);
+            let font = customFont ? await doc.embedFont(customFont) : await doc.embedFont(StandardFonts.Helvetica);
+            
             const fmt = document.getElementById('pg-fmt').value;
             const pos = document.getElementById('pg-pos').value;
-            const size = parseInt(document.getElementById('pg-size').value);
-            const colorHex = document.getElementById('pg-color').value;
-            const r = parseInt(colorHex.slice(1, 3), 16) / 255;
-            const g = parseInt(colorHex.slice(3, 5), 16) / 255;
-            const b = parseInt(colorHex.slice(5, 7), 16) / 255;
+            const color = hexToRgb(document.getElementById('pg-color').value);
             const total = doc.getPageCount();
 
             doc.getPages().forEach((p, i) => {
@@ -683,12 +813,11 @@
                 if (fmt === 'eng') txt = `Page ${i + 1} of ${total}`;
                 if (fmt === 'heb') txt = `עמוד ${i + 1} מתוך ${total}`.split('').reverse().join('');
 
-                let x, y;
-                if (pos === 'bottom') { x = width / 2 - 20; y = 20; }
-                if (pos === 'top') { x = width / 2 - 20; y = height - 20; }
-                if (pos === 'bottom-side') { x = width - 50; y = 20; }
+                let x=width/2-10, y=20;
+                if(pos==='top') y = height - 20;
+                if(pos==='bottom-side') x = width - 50;
 
-                p.drawText(txt, { x, y, size, font, color: rgb(r, g, b) });
+                p.drawText(txt, { x, y, size: 12, font, color });
             });
             downloadBlob(new Blob([await doc.save()], { type: 'application/pdf' }), 'numbered.pdf');
             setStatus('✅ בוצע!', 'success');
@@ -723,50 +852,52 @@
         } catch (e) { setStatus('שגיאה: ' + e.message, 'error'); }
     }
 
-    // 7. תמונה על PDF
+    // 7. תמונה ל-PDF
     async function runImgOverlay() {
-        if (fileQueue.length < 2) return alert('צריך PDF ראשון ותמונה שנייה');
+        if (fileQueue.length < 2) return alert('נדרש: קובץ PDF ראשון, תמונה שנייה');
         setStatus('מדביק...');
         try {
             const doc = await PDFDocument.load(await fileQueue[0].file.arrayBuffer());
             const imgBytes = await fileQueue[1].file.arrayBuffer();
             let img;
-            if (fileQueue[1].type.includes('png')) img = await doc.embedPng(imgBytes);
+            if(fileQueue[1].type.includes('png')) img = await doc.embedPng(imgBytes);
             else img = await doc.embedJpg(imgBytes);
 
             const scale = parseFloat(document.getElementById('img-scale').value);
             const op = parseFloat(document.getElementById('img-op').value);
-            const xVal = parseFloat(document.getElementById('img-x').value);
-            const yVal = parseFloat(document.getElementById('img-y').value);
-
+            const x = parseFloat(document.getElementById('img-x').value);
+            const y = parseFloat(document.getElementById('img-y').value);
             const dims = img.scale(scale);
-            doc.getPages()[0].drawImage(img, {
-                x: xVal, y: yVal,
-                width: dims.width, height: dims.height,
-                opacity: op
-            });
+
+            doc.getPages()[0].drawImage(img, { x, y, width: dims.width, height: dims.height, opacity: op });
             downloadBlob(new Blob([await doc.save()], { type: 'application/pdf' }), 'overlay.pdf');
             setStatus('✅ בוצע!', 'success');
         } catch (e) { setStatus('שגיאה: ' + e.message, 'error'); }
     }
 
-    // 8. הצפנה
+    // 8. הצפנה (מתוקן)
     async function runProtect() {
         if (!fileQueue.length) return alert('בחר קובץ');
         const pass = document.getElementById('pass-val').value;
         if (!pass) return alert('הזן סיסמה');
+        
+        setStatus('מצפין...');
         try {
             const doc = await PDFDocument.load(await fileQueue[0].file.arrayBuffer());
-            doc.encrypt({ userPassword: pass, ownerPassword: pass, permissions: { modifying: false } });
+            doc.encrypt({
+                userPassword: pass,
+                ownerPassword: pass,
+                permissions: { printing: 'highResolution', modifying: false, copying: false }
+            });
             downloadBlob(new Blob([await doc.save()], { type: 'application/pdf' }), 'protected.pdf');
-            setStatus('✅ מוגן!', 'success');
-        } catch (e) { setStatus(e.message, 'error'); }
+            setStatus('✅ הוצפן בהצלחה!', 'success');
+        } catch (e) { setStatus('שגיאה: ' + e.message, 'error'); }
     }
 
     // 9. שחור לבן
     async function runGrayscale() {
         if (!fileQueue.length) return alert('בחר קובץ');
-        setStatus('ממיר לגווני אפור...');
+        setStatus('ממיר לשחור לבן...');
         try {
             const bytes = await fileQueue[0].file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(bytes).promise;
@@ -781,7 +912,6 @@
                 canvas.height = viewport.height;
                 await page.render({ canvasContext: ctx, viewport }).promise;
 
-                // פיקסלים
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imgData.data;
                 for (let j = 0; j < data.length; j += 4) {
@@ -798,10 +928,15 @@
             }
             downloadBlob(new Blob([await newDoc.save()], { type: 'application/pdf' }), 'bw.pdf');
             setStatus('✅ בוצע!', 'success');
-        } catch (e) { setStatus(e.message, 'error'); }
+        } catch (e) { setStatus('שגיאה: ' + e.message, 'error'); }
     }
 
+    function hexToRgb(hex) {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+        return { type: 'RGB', red: r, green: g, blue: b }; // שימוש באובייקט פנימי של PDFLib אם צריך, או פשוט rgb()
+    }
 </script>
 </body>
 </html>
-
